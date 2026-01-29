@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>adb_entra_auth_test</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.*" />
+    <PackageReference Include="OCI.DotNetSDK.Secrets" Version="100.*" />
+    <PackageReference Include="OCI.DotNetSDK.Vault" Version="100.*" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.*" />
+  </ItemGroup>
+
+</Project>

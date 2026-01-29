@@ -1,0 +1,68 @@
+# Build results
+bin/
+obj/
+out/
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.csproj.user
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build logs
+*.log
+msbuild*.log
+
+# Test results
+TestResults/
+*.trx
+
+# Secrets and credentials - never commit these
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+.env
+.env.*
+
+# Oracle wallet files - never commit these
+cwallet.sso
+ewallet.p12
+tnsnames.ora
+sqlnet.ora
+
+# OCI config
+.oci/
