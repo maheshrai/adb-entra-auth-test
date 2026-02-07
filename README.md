@@ -25,8 +25,8 @@ A .NET application that connects to Oracle Autonomous Database (ADB) using Micro
 
 ```bash
 # Secrets
-export APP_ENTRA_TEST_PRIVATE_KEY="ocid1.vaultsecret.oc1..xxxxx"   # PEM private key
-export APP_ENTRA_TEST_PRIVATE_KEY_PWD="ocid1.vaultsecret.oc1..xxxxx"   # PEM certificate
+export APP_ENTRA_TEST_PRIVATE_KEY="ocid1.vaultsecret.oc1..xxxxx"   # PEM (certificate + encrypted private key)
+export APP_ENTRA_TEST_PRIVATE_KEY_PWD="ocid1.vaultsecret.oc1..xxxxx"   # Private key password
 
 # Entra ID (Azure AD)
 export ENTRA_CLIENT_ID="your-app-client-id"

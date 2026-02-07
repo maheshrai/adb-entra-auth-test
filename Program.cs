@@ -2,9 +2,9 @@ using adb_entra_auth_test.Services;
 using System.Security.Cryptography.X509Certificates;
 
 // Secrets - set via environment variables
-var privateKeySecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY")
+var pemSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY")
     ?? throw new InvalidOperationException("APP_ENTRA_TEST_PRIVATE_KEY environment variable is required");
-var certificateSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY_PWD")
+var pemPasswordSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY_PWD")
     ?? throw new InvalidOperationException("APP_ENTRA_TEST_PRIVATE_KEY_PWD environment variable is required");
 
 // Entra ID (Azure AD) configuration
@@ -30,20 +30,20 @@ try
     Console.WriteLine("Initializing OCI Vault service...");
     var vaultService = new OciVaultService();
 
-    // Step 2: Retrieve PEM private key and certificate from OCI Vault in parallel
+    // Step 2: Retrieve PEM and password from OCI Vault in parallel
     Console.WriteLine("Retrieving secrets from OCI Vault...");
-    var privateKeyTask = vaultService.GetSecretAsync(privateKeySecretId);
-    var certificateTask = vaultService.GetSecretAsync(certificateSecretId);
+    var pemTask = vaultService.GetSecretAsync(pemSecretId);
+    var pemPasswordTask = vaultService.GetSecretAsync(pemPasswordSecretId);
 
-    await Task.WhenAll(privateKeyTask, certificateTask);
+    await Task.WhenAll(pemTask, pemPasswordTask);
 
-    var privateKeyPem = await privateKeyTask;
-    var certificatePem = await certificateTask;
+    var pem = await pemTask;
+    var pemPassword = await pemPasswordTask;
     Console.WriteLine("Secrets retrieved successfully from OCI Vault.");
 
-    // Step 3: Load the X509Certificate2 from PEM
+    // Step 3: Load the X509Certificate2 from encrypted PEM
     Console.WriteLine("Loading certificate from PEM...");
-    var certificate = X509Certificate2.CreateFromPem(certificatePem, privateKeyPem);
+    var certificate = X509Certificate2.CreateFromEncryptedPem(pem, pem, pemPassword);
     Console.WriteLine($"Certificate loaded. Subject: {certificate.Subject}");
 
     // Step 4: Acquire access token from Entra ID
