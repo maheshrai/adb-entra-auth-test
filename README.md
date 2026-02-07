@@ -40,20 +40,6 @@ export TNS_ADMIN="/path/to/wallet"                            # Wallet directory
 export ORACLE_WALLET_PASSWORD="wallet_password"               # Optional
 ```
 
-### OCI Vault Setup
-
-1. Create a vault in OCI Console
-2. Store the PEM private key as a secret:
-   ```bash
-   # Create secret in OCI Vault with the PEM private key content
-   # The key should be in PEM format (-----BEGIN PRIVATE KEY-----)
-   ```
-3. Store the PEM certificate as a separate secret:
-   ```bash
-   # Create secret in OCI Vault with the PEM certificate content
-   # The cert should be in PEM format (-----BEGIN CERTIFICATE-----)
-   ```
-
 ### Entra ID Setup
 
 1. Register an application in Entra ID
