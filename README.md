@@ -24,7 +24,7 @@ A .NET application that connects to Oracle Autonomous Database (ADB) using Micro
 ### Environment Variables
 
 ```bash
-# OCI Vault Secrets
+# Secrets
 export APP_ENTRA_TEST_PRIVATE_KEY="ocid1.vaultsecret.oc1..xxxxx"   # PEM private key
 export APP_ENTRA_TEST_PRIVATE_KEY_PWD="ocid1.vaultsecret.oc1..xxxxx"   # PEM certificate
 
