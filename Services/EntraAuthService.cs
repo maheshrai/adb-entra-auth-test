@@ -30,40 +30,21 @@ public class EntraAuthService
     }
 
     /// <summary>
-    /// Creates a new Entra authentication service using a PFX certificate from bytes.
+    /// Creates a new Entra authentication service using PEM-encoded certificate and private key.
     /// </summary>
     /// <param name="clientId">The application (client) ID from Entra app registration.</param>
     /// <param name="tenantId">The directory (tenant) ID from Entra.</param>
-    /// <param name="pfxBytes">The PFX certificate bytes.</param>
-    /// <param name="pfxPassword">The password for the PFX file.</param>
+    /// <param name="certificatePem">The certificate in PEM format.</param>
+    /// <param name="privateKeyPem">The private key in PEM format.</param>
     /// <param name="scopes">The scopes to request.</param>
     public EntraAuthService(
         string clientId,
         string tenantId,
-        byte[] pfxBytes,
-        string pfxPassword,
+        string certificatePem,
+        string privateKeyPem,
         string[] scopes)
-        : this(clientId, tenantId, LoadCertificate(pfxBytes, pfxPassword), scopes)
+        : this(clientId, tenantId, X509Certificate2.CreateFromPem(certificatePem, privateKeyPem), scopes)
     {
-    }
-
-    /// <summary>
-    /// Creates a new Entra authentication service using a base64-encoded PFX certificate.
-    /// </summary>
-    /// <param name="clientId">The application (client) ID from Entra app registration.</param>
-    /// <param name="tenantId">The directory (tenant) ID from Entra.</param>
-    /// <param name="pfxBase64">The PFX certificate as a base64 string.</param>
-    /// <param name="pfxPassword">The password for the PFX file.</param>
-    /// <param name="scopes">The scopes to request.</param>
-    public static EntraAuthService FromBase64Pfx(
-        string clientId,
-        string tenantId,
-        string pfxBase64,
-        string pfxPassword,
-        string[] scopes)
-    {
-        var pfxBytes = Convert.FromBase64String(pfxBase64);
-        return new EntraAuthService(clientId, tenantId, pfxBytes, pfxPassword, scopes);
     }
 
     /// <summary>
@@ -88,13 +69,5 @@ public class EntraAuthService
         return await _msalClient
             .AcquireTokenForClient(_scopes)
             .ExecuteAsync();
-    }
-
-    /// <summary>
-    /// Loads an X509Certificate2 from PFX bytes.
-    /// </summary>
-    private static X509Certificate2 LoadCertificate(byte[] pfxBytes, string password)
-    {
-        return X509CertificateLoader.LoadPkcs12(pfxBytes, password, X509KeyStorageFlags.MachineKeySet);
     }
 }

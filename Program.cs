@@ -2,10 +2,10 @@ using adb_entra_auth_test.Services;
 using System.Security.Cryptography.X509Certificates;
 
 // OCI Vault secret OCIDs - set via environment variables
-var pfxSecretId = Environment.GetEnvironmentVariable("OCI_PFX_SECRET_ID")
-    ?? throw new InvalidOperationException("OCI_PFX_SECRET_ID environment variable is required");
-var pfxPasswordSecretId = Environment.GetEnvironmentVariable("OCI_PFX_PASSWORD_SECRET_ID")
-    ?? throw new InvalidOperationException("OCI_PFX_PASSWORD_SECRET_ID environment variable is required");
+var privateKeySecretId = Environment.GetEnvironmentVariable("OCI_PRIVATE_KEY_SECRET_ID")
+    ?? throw new InvalidOperationException("OCI_PRIVATE_KEY_SECRET_ID environment variable is required");
+var certificateSecretId = Environment.GetEnvironmentVariable("OCI_CERTIFICATE_SECRET_ID")
+    ?? throw new InvalidOperationException("OCI_CERTIFICATE_SECRET_ID environment variable is required");
 
 // Entra ID (Azure AD) configuration
 var entraClientId = Environment.GetEnvironmentVariable("ENTRA_CLIENT_ID")
@@ -30,21 +30,20 @@ try
     Console.WriteLine("Initializing OCI Vault service...");
     var vaultService = new OciVaultService();
 
-    // Step 2: Retrieve PFX and password from OCI Vault in parallel
+    // Step 2: Retrieve PEM private key and certificate from OCI Vault in parallel
     Console.WriteLine("Retrieving secrets from OCI Vault...");
-    var pfxTask = vaultService.GetSecretAsync(pfxSecretId);
-    var pfxPasswordTask = vaultService.GetSecretAsync(pfxPasswordSecretId);
+    var privateKeyTask = vaultService.GetSecretAsync(privateKeySecretId);
+    var certificateTask = vaultService.GetSecretAsync(certificateSecretId);
 
-    await Task.WhenAll(pfxTask, pfxPasswordTask);
+    await Task.WhenAll(privateKeyTask, certificateTask);
 
-    var pfxBase64 = await pfxTask;
-    var pfxPassword = await pfxPasswordTask;
+    var privateKeyPem = await privateKeyTask;
+    var certificatePem = await certificateTask;
     Console.WriteLine("Secrets retrieved successfully from OCI Vault.");
 
-    // Step 3: Load the X509Certificate2 from PFX
-    Console.WriteLine("Loading certificate from PFX...");
-    var pfxBytes = Convert.FromBase64String(pfxBase64);
-    var certificate = X509CertificateLoader.LoadPkcs12(pfxBytes, pfxPassword, X509KeyStorageFlags.MachineKeySet);
+    // Step 3: Load the X509Certificate2 from PEM
+    Console.WriteLine("Loading certificate from PEM...");
+    var certificate = X509Certificate2.CreateFromPem(certificatePem, privateKeyPem);
     Console.WriteLine($"Certificate loaded. Subject: {certificate.Subject}");
 
     // Step 4: Acquire access token from Entra ID

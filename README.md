@@ -7,7 +7,8 @@ A .NET application that connects to Oracle Autonomous Database (ADB) using Micro
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  OCI Vault  │────▶│   Entra ID  │────▶│ Access Token│────▶│ Oracle ADB  │
-│  (PFX+Pass) │     │   (MSAL)    │     │   (OAuth)   │     │  (TNS Name) │
+│ (PEM Cert+  │     │   (MSAL)    │     │   (OAuth)   │     │  (TNS Name) │
+│  Priv Key)  │     │             │     │             │     │             │
 └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
@@ -24,8 +25,8 @@ A .NET application that connects to Oracle Autonomous Database (ADB) using Micro
 
 ```bash
 # OCI Vault Secrets
-export OCI_PFX_SECRET_ID="ocid1.vaultsecret.oc1..xxxxx"       # PFX certificate (base64)
-export OCI_PFX_PASSWORD_SECRET_ID="ocid1.vaultsecret.oc1..xxxxx"  # PFX password
+export OCI_PRIVATE_KEY_SECRET_ID="ocid1.vaultsecret.oc1..xxxxx"   # PEM private key
+export OCI_CERTIFICATE_SECRET_ID="ocid1.vaultsecret.oc1..xxxxx"   # PEM certificate
 
 # Entra ID (Azure AD)
 export ENTRA_CLIENT_ID="your-app-client-id"
@@ -42,12 +43,16 @@ export ORACLE_WALLET_PASSWORD="wallet_password"               # Optional
 ### OCI Vault Setup
 
 1. Create a vault in OCI Console
-2. Store the PFX certificate as base64:
+2. Store the PEM private key as a secret:
    ```bash
-   base64 -i your-certificate.pfx > pfx_base64.txt
-   # Create secret in OCI Vault with the base64 content
+   # Create secret in OCI Vault with the PEM private key content
+   # The key should be in PEM format (-----BEGIN PRIVATE KEY-----)
    ```
-3. Store the PFX password as a separate secret
+3. Store the PEM certificate as a separate secret:
+   ```bash
+   # Create secret in OCI Vault with the PEM certificate content
+   # The cert should be in PEM format (-----BEGIN CERTIFICATE-----)
+   ```
 
 ### Entra ID Setup
 
@@ -80,7 +85,7 @@ dotnet run
 Initializing OCI Vault service...
 Retrieving secrets from OCI Vault...
 Secrets retrieved successfully from OCI Vault.
-Loading certificate from PFX...
+Loading certificate from PEM...
 Certificate loaded. Subject: CN=your-app
 Initializing Entra authentication service...
 Acquiring access token from Entra ID...
