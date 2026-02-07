@@ -2,10 +2,12 @@ using adb_entra_auth_test.Services;
 using System.Security.Cryptography.X509Certificates;
 
 // Secrets - set via environment variables
-var pemSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY")
+var privateKeySecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY")
     ?? throw new InvalidOperationException("APP_ENTRA_TEST_PRIVATE_KEY environment variable is required");
-var pemPasswordSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY_PWD")
+var privateKeyPasswordSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY_PWD")
     ?? throw new InvalidOperationException("APP_ENTRA_TEST_PRIVATE_KEY_PWD environment variable is required");
+var certificateSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_CERTIFICATE")
+    ?? throw new InvalidOperationException("APP_ENTRA_TEST_CERTIFICATE environment variable is required");
 
 // Entra ID (Azure AD) configuration
 var entraClientId = Environment.GetEnvironmentVariable("ENTRA_CLIENT_ID")
@@ -30,20 +32,22 @@ try
     Console.WriteLine("Initializing OCI Vault service...");
     var vaultService = new OciVaultService();
 
-    // Step 2: Retrieve PEM and password from OCI Vault in parallel
+    // Step 2: Retrieve secrets from OCI Vault in parallel
     Console.WriteLine("Retrieving secrets from OCI Vault...");
-    var pemTask = vaultService.GetSecretAsync(pemSecretId);
-    var pemPasswordTask = vaultService.GetSecretAsync(pemPasswordSecretId);
+    var privateKeyTask = vaultService.GetSecretAsync(privateKeySecretId);
+    var privateKeyPasswordTask = vaultService.GetSecretAsync(privateKeyPasswordSecretId);
+    var certificateTask = vaultService.GetSecretAsync(certificateSecretId);
 
-    await Task.WhenAll(pemTask, pemPasswordTask);
+    await Task.WhenAll(privateKeyTask, privateKeyPasswordTask, certificateTask);
 
-    var pem = await pemTask;
-    var pemPassword = await pemPasswordTask;
+    var privateKeyPem = await privateKeyTask;
+    var privateKeyPassword = await privateKeyPasswordTask;
+    var certificatePem = await certificateTask;
     Console.WriteLine("Secrets retrieved successfully from OCI Vault.");
 
-    // Step 3: Load the X509Certificate2 from encrypted PEM
+    // Step 3: Load the X509Certificate2 from PEM certificate and encrypted private key
     Console.WriteLine("Loading certificate from PEM...");
-    var certificate = X509Certificate2.CreateFromEncryptedPem(pem, pem, pemPassword);
+    var certificate = X509Certificate2.CreateFromEncryptedPem(certificatePem, privateKeyPem, privateKeyPassword);
     Console.WriteLine($"Certificate loaded. Subject: {certificate.Subject}");
 
     // Step 4: Acquire access token from Entra ID

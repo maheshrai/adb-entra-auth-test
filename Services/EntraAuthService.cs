@@ -30,20 +30,22 @@ public class EntraAuthService
     }
 
     /// <summary>
-    /// Creates a new Entra authentication service using an encrypted PEM containing certificate and private key.
+    /// Creates a new Entra authentication service using a PEM certificate and encrypted private key.
     /// </summary>
     /// <param name="clientId">The application (client) ID from Entra app registration.</param>
     /// <param name="tenantId">The directory (tenant) ID from Entra.</param>
-    /// <param name="pem">The PEM content containing the certificate and encrypted private key.</param>
-    /// <param name="password">The password for the encrypted private key.</param>
+    /// <param name="certificatePem">The certificate in PEM format.</param>
+    /// <param name="privateKeyPem">The encrypted private key in PEM format.</param>
+    /// <param name="privateKeyPassword">The password for the encrypted private key.</param>
     /// <param name="scopes">The scopes to request.</param>
     public EntraAuthService(
         string clientId,
         string tenantId,
-        string pem,
-        string password,
+        string certificatePem,
+        string privateKeyPem,
+        string privateKeyPassword,
         string[] scopes)
-        : this(clientId, tenantId, X509Certificate2.CreateFromEncryptedPem(pem, pem, password), scopes)
+        : this(clientId, tenantId, X509Certificate2.CreateFromEncryptedPem(certificatePem, privateKeyPem, privateKeyPassword), scopes)
     {
     }
 
