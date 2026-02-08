@@ -21,6 +21,16 @@ A .NET application that connects to Oracle Autonomous Database (ADB) using Micro
 
 ## Configuration
 
+### Using a `.env` File
+
+Copy the example file and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+The app automatically loads `.env` on startup. Actual environment variables take precedence over `.env` values.
+
 ### Environment Variables
 
 ```bash
@@ -152,6 +162,7 @@ var result = await oracleService.ExecuteQueryAsync("SELECT * FROM my_table");
 - `Microsoft.Identity.Client` - MSAL for Entra ID authentication
 - `OCI.DotNetSDK.Secrets` - OCI Vault access
 - `OCI.DotNetSDK.Vault` - OCI Vault management
+- `DotNetEnv` - `.env` file loading
 - `Oracle.ManagedDataAccess.Core` - Oracle database connectivity
 
 ## License
