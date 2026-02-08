@@ -30,7 +30,7 @@ try
 {
     // Step 1: Initialize OCI Vault service
     Console.WriteLine("Initializing OCI Vault service...");
-    var vaultService = new OciVaultService();
+    var vaultService = OciVaultService.CreateFromEnvironment();
 
     // Step 2: Retrieve secrets from OCI Vault in parallel
     Console.WriteLine("Retrieving secrets from OCI Vault...");

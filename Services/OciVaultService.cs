@@ -2,6 +2,7 @@ using Oci.Common;
 using Oci.Common.Auth;
 using Oci.SecretsService;
 using Oci.SecretsService.Requests;
+using System.Security;
 using System.Text;
 
 namespace adb_entra_auth_test.Services;
@@ -48,6 +49,48 @@ public class OciVaultService
     public static OciVaultService CreateWithInstancePrincipal()
     {
         var provider = new InstancePrincipalsAuthenticationDetailsProvider();
+        return new OciVaultService(provider);
+    }
+
+    /// <summary>
+    /// Creates a new OCI Vault service using environment variables for authentication.
+    /// Required: OCI_TENANCY_OCID, OCI_USER_OCID, OCI_FINGERPRINT, OCI_REGION, OCI_KEY_FILE.
+    /// Optional: OCI_KEY_PASSPHRASE.
+    /// </summary>
+    /// <returns>A new OciVaultService configured from environment variables.</returns>
+    public static OciVaultService CreateFromEnvironment()
+    {
+        var tenancyId = Environment.GetEnvironmentVariable("OCI_TENANCY_OCID")
+            ?? throw new InvalidOperationException("OCI_TENANCY_OCID environment variable is required");
+        var userId = Environment.GetEnvironmentVariable("OCI_USER_OCID")
+            ?? throw new InvalidOperationException("OCI_USER_OCID environment variable is required");
+        var fingerprint = Environment.GetEnvironmentVariable("OCI_FINGERPRINT")
+            ?? throw new InvalidOperationException("OCI_FINGERPRINT environment variable is required");
+        var region = Environment.GetEnvironmentVariable("OCI_REGION")
+            ?? throw new InvalidOperationException("OCI_REGION environment variable is required");
+        var keyFile = Environment.GetEnvironmentVariable("OCI_KEY_FILE")
+            ?? throw new InvalidOperationException("OCI_KEY_FILE environment variable is required");
+        var passphrase = Environment.GetEnvironmentVariable("OCI_KEY_PASSPHRASE");
+
+        var securePassphrase = new SecureString();
+        if (!string.IsNullOrEmpty(passphrase))
+        {
+            foreach (var c in passphrase)
+                securePassphrase.AppendChar(c);
+        }
+        securePassphrase.MakeReadOnly();
+
+        var keySupplier = new FilePrivateKeySupplier(keyFile, securePassphrase);
+
+        var provider = new SimpleAuthenticationDetailsProvider
+        {
+            TenantId = tenancyId,
+            UserId = userId,
+            Fingerprint = fingerprint,
+            Region = Region.FromRegionId(region),
+            PrivateKeySupplier = keySupplier
+        };
+
         return new OciVaultService(provider);
     }
 

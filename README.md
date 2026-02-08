@@ -15,7 +15,7 @@ A .NET application that connects to Oracle Autonomous Database (ADB) using Micro
 ## Prerequisites
 
 - .NET 10.0 SDK
-- OCI CLI configured (`~/.oci/config`)
+- OCI API signing key (PEM file)
 - Oracle ADB wallet downloaded
 - Entra ID app registration with certificate authentication
 
@@ -24,7 +24,15 @@ A .NET application that connects to Oracle Autonomous Database (ADB) using Micro
 ### Environment Variables
 
 ```bash
-# Secrets
+# OCI Authentication
+export OCI_TENANCY_OCID="ocid1.tenancy.oc1..xxxxx"                    # OCI tenancy OCID
+export OCI_USER_OCID="ocid1.user.oc1..xxxxx"                          # OCI user OCID
+export OCI_FINGERPRINT="aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99" # API signing key fingerprint
+export OCI_REGION="us-ashburn-1"                                       # OCI region
+export OCI_KEY_FILE="/path/to/oci_api_key.pem"                         # Path to OCI API private key PEM file
+export OCI_KEY_PASSPHRASE="optional_passphrase"                        # Optional passphrase for the key
+
+# OCI Vault Secrets
 export APP_ENTRA_TEST_PRIVATE_KEY="ocid1.vaultsecret.oc1..xxxxx"       # Encrypted PEM private key
 export APP_ENTRA_TEST_PRIVATE_KEY_PWD="ocid1.vaultsecret.oc1..xxxxx"   # Private key password
 export APP_ENTRA_TEST_CERTIFICATE="ocid1.vaultsecret.oc1..xxxxx"       # PEM certificate
@@ -116,7 +124,7 @@ Database timestamp: 1/29/2026 10:00:00 PM
 Retrieves secrets from OCI Vault using the OCI .NET SDK.
 
 ```csharp
-var vaultService = new OciVaultService();  // Uses ~/.oci/config
+var vaultService = OciVaultService.CreateFromEnvironment();  // Uses OCI_* env vars
 var secret = await vaultService.GetSecretAsync(secretId);
 ```
 
