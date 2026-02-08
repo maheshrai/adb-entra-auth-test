@@ -57,6 +57,7 @@ appsettings.Local.json
 secrets.json
 .env
 .env.*
+!.env.example
 
 # Oracle wallet files - never commit these
 cwallet.sso
