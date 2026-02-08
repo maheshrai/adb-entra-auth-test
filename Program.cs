@@ -1,6 +1,9 @@
 using adb_entra_auth_test.Services;
 using System.Security.Cryptography.X509Certificates;
 
+// Load .env file if present
+DotNetEnv.Env.Load();
+
 // Secrets - set via environment variables
 var privateKeySecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY")
     ?? throw new InvalidOperationException("APP_ENTRA_TEST_PRIVATE_KEY environment variable is required");
