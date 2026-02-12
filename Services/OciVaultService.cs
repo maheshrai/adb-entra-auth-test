@@ -120,6 +120,31 @@ public class OciVaultService
     }
 
     /// <summary>
+    /// Retrieves a secret value from OCI Vault as raw bytes.
+    /// Use this for binary content (e.g., DER-encoded keys) that would be corrupted by UTF-8 conversion.
+    /// </summary>
+    /// <param name="secretId">The OCID of the secret to retrieve.</param>
+    /// <returns>The secret value as a byte array.</returns>
+    public async Task<byte[]> GetSecretBytesAsync(string secretId)
+    {
+        var request = new GetSecretBundleRequest
+        {
+            SecretId = secretId,
+            Stage = GetSecretBundleRequest.StageEnum.Current
+        };
+
+        var response = await _secretsClient.GetSecretBundle(request);
+        var secretContent = response.SecretBundle.SecretBundleContent;
+
+        if (secretContent is Oci.SecretsService.Models.Base64SecretBundleContentDetails base64Content)
+        {
+            return Convert.FromBase64String(base64Content.Content);
+        }
+
+        throw new InvalidOperationException($"Unexpected secret content type: {secretContent.GetType().Name}");
+    }
+
+    /// <summary>
     /// Retrieves a private key from OCI Vault.
     /// </summary>
     /// <param name="secretId">The OCID of the secret containing the private key.</param>

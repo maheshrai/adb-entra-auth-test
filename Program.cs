@@ -1,5 +1,7 @@
 using adb_entra_auth_test.Services;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 // Load .env file if present
 DotNetEnv.Env.Load();
@@ -39,19 +41,56 @@ try
     Console.WriteLine("Reading certificate from file...");
     Console.WriteLine("Retrieving secrets from OCI Vault...");
     var certificateTask = File.ReadAllTextAsync(certificateFile);
-    var privateKeyTask = vaultService.GetSecretAsync(privateKeySecretId);
+    var privateKeyBytesTask = vaultService.GetSecretBytesAsync(privateKeySecretId);
     var privateKeyPasswordTask = vaultService.GetSecretAsync(privateKeyPasswordSecretId);
 
-    await Task.WhenAll(certificateTask, privateKeyTask, privateKeyPasswordTask);
+    await Task.WhenAll(certificateTask, privateKeyBytesTask, privateKeyPasswordTask);
 
-    var certificatePem = await certificateTask;
-    var privateKeyPem = await privateKeyTask;
+    var certificateFileContent = await certificateTask;
+    var privateKeyBytes = await privateKeyBytesTask;
     var privateKeyPassword = await privateKeyPasswordTask;
     Console.WriteLine("Certificate loaded from file and secrets retrieved from OCI Vault.");
 
-    // Step 3: Load the X509Certificate2 from PEM certificate and encrypted private key
-    Console.WriteLine("Loading certificate from PEM...");
-    var certificate = X509Certificate2.CreateFromEncryptedPem(certificatePem, privateKeyPem, privateKeyPassword);
+    // Extract PEM block from certificate file (may contain extra text like subject= headers)
+    var certPem = certificateFileContent;
+    var beginMarker = "-----BEGIN CERTIFICATE-----";
+    var endMarker = "-----END CERTIFICATE-----";
+    var beginIdx = certificateFileContent.IndexOf(beginMarker);
+    if (beginIdx >= 0)
+    {
+        var endIdx = certificateFileContent.IndexOf(endMarker, beginIdx);
+        if (endIdx >= 0)
+            certPem = certificateFileContent[beginIdx..(endIdx + endMarker.Length)];
+    }
+
+    // Step 3: Load the X509Certificate2 from certificate and private key
+    Console.WriteLine("Loading certificate...");
+    X509Certificate2 certificate;
+    var privateKeyText = Encoding.UTF8.GetString(privateKeyBytes);
+    if (privateKeyText.StartsWith("-----BEGIN"))
+    {
+        // PEM-encoded private key
+        if (privateKeyText.Contains("ENCRYPTED"))
+            certificate = X509Certificate2.CreateFromEncryptedPem(certPem, privateKeyText, privateKeyPassword);
+        else
+            certificate = X509Certificate2.CreateFromPem(certPem, privateKeyText);
+    }
+    else
+    {
+        // DER-encoded private key
+        var cert = X509Certificate2.CreateFromPem(certPem);
+        var rsa = RSA.Create();
+        try
+        {
+            rsa.ImportEncryptedPkcs8PrivateKey(privateKeyPassword.AsSpan(), privateKeyBytes, out _);
+        }
+        catch (CryptographicException)
+        {
+            // If encrypted import fails, try unencrypted
+            rsa.ImportPkcs8PrivateKey(privateKeyBytes, out _);
+        }
+        certificate = cert.CopyWithPrivateKey(rsa);
+    }
     Console.WriteLine($"Certificate loaded. Subject: {certificate.Subject}");
 
     // Step 4: Acquire access token from Entra ID
