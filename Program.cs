@@ -95,21 +95,19 @@ try
     Console.WriteLine($"Database version: {dbVersion}");
 
     // Run a sample query
-    Console.WriteLine("\nExecuting sample query: SELECT * FROM DUAL");
-    var result = await oracleService.ExecuteQueryAsync("SELECT 'Hello from Oracle ADB!' AS MESSAGE FROM DUAL");
+    Console.WriteLine("\nExecuting query: SELECT * FROM app_test");
+    var result = await oracleService.ExecuteQueryAsync("SELECT * FROM app_test");
 
     foreach (System.Data.DataRow row in result.Rows)
     {
-        Console.WriteLine($"Result: {row["MESSAGE"]}");
+        foreach (System.Data.DataColumn col in result.Columns)
+        {
+            Console.WriteLine($"  {col.ColumnName}: {row[col]}");
+        }
+        Console.WriteLine();
     }
 
-    // Run a query with the current timestamp
-    Console.WriteLine("\nExecuting timestamp query...");
-    var timestamp = await oracleService.ExecuteScalarAsync<DateTime>(
-        "SELECT SYSTIMESTAMP FROM DUAL");
-    Console.WriteLine($"Database timestamp: {timestamp}");
-
-    Console.WriteLine("\n--- All queries completed successfully ---");
+    Console.WriteLine("--- All queries completed successfully ---");
 }
 catch (Exception ex)
 {
