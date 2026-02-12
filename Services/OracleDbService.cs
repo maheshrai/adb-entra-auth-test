@@ -8,7 +8,9 @@ namespace adb_entra_auth_test.Services;
 /// </summary>
 public class OracleDbService : IDisposable, IAsyncDisposable
 {
-    private readonly string _connectionString;
+    private string _connectionString = "";
+    private string? _accessToken;
+    private string? _walletPassword;
     private OracleConnection? _connection;
     private bool _disposed;
 
@@ -38,20 +40,12 @@ public class OracleDbService : IDisposable, IAsyncDisposable
         var builder = new OracleConnectionStringBuilder
         {
             DataSource = tnsName,
-            UserID = userId,
+            UserID = accessToken != null ? "/" : userId,
         };
 
-        // Set the access token for OAuth/token-based authentication
-        builder["Token Authentication"] = "OAUTH";
-        builder["Access Token"] = accessToken;
-
-        // Set wallet password if provided
-        if (!string.IsNullOrEmpty(walletPassword))
-        {
-            builder["Wallet Password"] = walletPassword;
-        }
-
         _connectionString = builder.ConnectionString;
+        _accessToken = accessToken;
+        _walletPassword = walletPassword;
     }
 
     /// <summary>
@@ -78,6 +72,8 @@ public class OracleDbService : IDisposable, IAsyncDisposable
     /// <param name="accessToken">The Entra ID access token.</param>
     /// <param name="tnsAdmin">Optional TNS_ADMIN directory path.</param>
     /// <returns>A new OracleDbService instance.</returns>
+    private OracleDbService() { }
+
     public static OracleDbService FromConnectionString(string baseConnectionString, string accessToken, string? tnsAdmin = null)
     {
         if (!string.IsNullOrEmpty(tnsAdmin))
@@ -86,19 +82,10 @@ public class OracleDbService : IDisposable, IAsyncDisposable
             OracleConfiguration.WalletLocation = tnsAdmin;
         }
 
-        var builder = new OracleConnectionStringBuilder(baseConnectionString)
-        {
-            ["Token Authentication"] = "OAUTH",
-            ["Access Token"] = accessToken
-        };
-
-        return new OracleDbService(builder.ConnectionString);
-    }
-
-    // Private constructor for factory method
-    private OracleDbService(string connectionString)
-    {
-        _connectionString = connectionString;
+        var service = new OracleDbService();
+        service._connectionString = baseConnectionString;
+        service._accessToken = accessToken;
+        return service;
     }
 
     /// <summary>
@@ -107,6 +94,18 @@ public class OracleDbService : IDisposable, IAsyncDisposable
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _connection = new OracleConnection(_connectionString);
+        if (!string.IsNullOrEmpty(_walletPassword))
+        {
+            var opaquePassword = new OracleOpaqueString();
+            foreach (var c in _walletPassword)
+                opaquePassword.AppendChar(c);
+            opaquePassword.MakeReadOnly();
+            OracleConfiguration.WalletPassword = opaquePassword;
+        }
+        if (_accessToken != null)
+        {
+            _connection.AccessToken = new OracleAccessToken(_accessToken.ToCharArray());
+        }
         await _connection.OpenAsync(cancellationToken);
     }
 
