@@ -9,8 +9,8 @@ var privateKeySecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIV
     ?? throw new InvalidOperationException("APP_ENTRA_TEST_PRIVATE_KEY environment variable is required");
 var privateKeyPasswordSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_PRIVATE_KEY_PWD")
     ?? throw new InvalidOperationException("APP_ENTRA_TEST_PRIVATE_KEY_PWD environment variable is required");
-var certificateSecretId = Environment.GetEnvironmentVariable("APP_ENTRA_TEST_CERTIFICATE")
-    ?? throw new InvalidOperationException("APP_ENTRA_TEST_CERTIFICATE environment variable is required");
+var certificateFile = Environment.GetEnvironmentVariable("CERTIFICATE_FILE")
+    ?? throw new InvalidOperationException("CERTIFICATE_FILE environment variable is required");
 
 // Entra ID (Azure AD) configuration
 var entraClientId = Environment.GetEnvironmentVariable("ENTRA_CLIENT_ID")
@@ -35,18 +35,19 @@ try
     Console.WriteLine("Initializing OCI Vault service...");
     var vaultService = OciVaultService.CreateFromEnvironment();
 
-    // Step 2: Retrieve secrets from OCI Vault in parallel
+    // Step 2: Read certificate from file and retrieve secrets from OCI Vault in parallel
+    Console.WriteLine("Reading certificate from file...");
     Console.WriteLine("Retrieving secrets from OCI Vault...");
+    var certificateTask = File.ReadAllTextAsync(certificateFile);
     var privateKeyTask = vaultService.GetSecretAsync(privateKeySecretId);
     var privateKeyPasswordTask = vaultService.GetSecretAsync(privateKeyPasswordSecretId);
-    var certificateTask = vaultService.GetSecretAsync(certificateSecretId);
 
-    await Task.WhenAll(privateKeyTask, privateKeyPasswordTask, certificateTask);
+    await Task.WhenAll(certificateTask, privateKeyTask, privateKeyPasswordTask);
 
+    var certificatePem = await certificateTask;
     var privateKeyPem = await privateKeyTask;
     var privateKeyPassword = await privateKeyPasswordTask;
-    var certificatePem = await certificateTask;
-    Console.WriteLine("Secrets retrieved successfully from OCI Vault.");
+    Console.WriteLine("Certificate loaded from file and secrets retrieved from OCI Vault.");
 
     // Step 3: Load the X509Certificate2 from PEM certificate and encrypted private key
     Console.WriteLine("Loading certificate from PEM...");

@@ -1,15 +1,18 @@
 # Oracle ADB with Entra ID Token Authentication
 
-A .NET application that connects to Oracle Autonomous Database (ADB) using Microsoft Entra ID (Azure AD) token-based authentication. Secrets are securely retrieved from OCI Vault.
+A .NET application that connects to Oracle Autonomous Database (ADB) using Microsoft Entra ID (Azure AD) token-based authentication. The certificate is loaded from a local PEM file, and the private key and password are securely retrieved from OCI Vault.
 
 ## Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  OCI Vault  │────▶│   Entra ID  │────▶│ Access Token│────▶│ Oracle ADB  │
-│ (PEM Cert+  │     │   (MSAL)    │     │   (OAuth)   │     │  (TNS Name) │
-│  Priv Key)  │     │             │     │             │     │             │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+┌─────────────┐
+│  PEM Cert   │──┐
+│   (File)    │  │  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+└─────────────┘  ├─▶│   Entra ID  │────▶│ Access Token│────▶│ Oracle ADB  │
+┌─────────────┐  │  │   (MSAL)    │     │   (OAuth)   │     │  (TNS Name) │
+│  OCI Vault  │──┘  │             │     │             │     │             │
+│  (Priv Key) │     └─────────────┘     └─────────────┘     └─────────────┘
+└─────────────┘
 ```
 
 ## Prerequisites
@@ -42,10 +45,12 @@ export OCI_REGION="us-ashburn-1"                                       # OCI reg
 export OCI_KEY_FILE="/path/to/oci_api_key.pem"                         # Path to OCI API private key PEM file
 export OCI_KEY_PASSPHRASE="optional_passphrase"                        # Optional passphrase for the key
 
+# Certificate file
+export CERTIFICATE_FILE="/path/to/certificate.pem"                      # PEM certificate file
+
 # OCI Vault Secrets
 export APP_ENTRA_TEST_PRIVATE_KEY="ocid1.vaultsecret.oc1..xxxxx"       # Encrypted PEM private key
 export APP_ENTRA_TEST_PRIVATE_KEY_PWD="ocid1.vaultsecret.oc1..xxxxx"   # Private key password
-export APP_ENTRA_TEST_CERTIFICATE="ocid1.vaultsecret.oc1..xxxxx"       # PEM certificate
 
 # Entra ID (Azure AD)
 export ENTRA_CLIENT_ID="your-app-client-id"
@@ -88,8 +93,9 @@ dotnet run
 
 ```
 Initializing OCI Vault service...
+Reading certificate from file...
 Retrieving secrets from OCI Vault...
-Secrets retrieved successfully from OCI Vault.
+Certificate loaded from file and secrets retrieved from OCI Vault.
 Loading certificate from PEM...
 Certificate loaded. Subject: CN=your-app
 Initializing Entra authentication service...
