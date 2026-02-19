@@ -8,9 +8,8 @@ namespace adb_entra_auth_test.Services;
 /// </summary>
 public class OracleDbService : IDisposable, IAsyncDisposable
 {
-    private string _connectionString = "";
-    private string? _accessToken;
-    private string? _walletPassword;
+    private readonly string _connectionString;
+    private readonly string _accessToken;
     private OracleConnection? _connection;
     private bool _disposed;
 
@@ -18,74 +17,26 @@ public class OracleDbService : IDisposable, IAsyncDisposable
     /// Creates a new Oracle database service using TNS name with token-based authentication.
     /// </summary>
     /// <param name="tnsName">The TNS alias name from tnsnames.ora.</param>
-    /// <param name="userId">The database user ID (mapped to Entra identity).</param>
     /// <param name="accessToken">The Entra ID access token.</param>
-    /// <param name="tnsAdmin">The TNS_ADMIN directory path containing tnsnames.ora and wallet.</param>
-    /// <param name="walletLocation">Optional separate wallet location. If not specified, uses tnsAdmin.</param>
-    /// <param name="walletPassword">Optional wallet password (for auto-open wallets, not needed).</param>
+    /// <param name="tnsAdmin">The TNS_ADMIN directory path containing tnsnames.ora.</param>
+    /// <param name="walletLocation">The wallet directory path containing cwallet.sso.</param>
     public OracleDbService(
         string tnsName,
-        string userId,
         string accessToken,
         string tnsAdmin,
-        string? walletLocation = null,
-        string? walletPassword = null)
+        string walletLocation)
     {
-        // Set TNS_ADMIN for Oracle client to find tnsnames.ora
         OracleConfiguration.TnsAdmin = tnsAdmin;
-
-        // Configure wallet location (defaults to TNS_ADMIN if not specified)
-        OracleConfiguration.WalletLocation = walletLocation ?? tnsAdmin;
+        OracleConfiguration.WalletLocation = walletLocation;
 
         var builder = new OracleConnectionStringBuilder
         {
             DataSource = tnsName,
-            UserID = accessToken != null ? "/" : userId,
+            UserID = "/",
         };
 
         _connectionString = builder.ConnectionString;
         _accessToken = accessToken;
-        _walletPassword = walletPassword;
-    }
-
-    /// <summary>
-    /// Creates a new Oracle database service using TNS name from environment variables.
-    /// Reads TNS_ADMIN from environment if not specified.
-    /// </summary>
-    /// <param name="tnsName">The TNS alias name from tnsnames.ora.</param>
-    /// <param name="userId">The database user ID (mapped to Entra identity).</param>
-    /// <param name="accessToken">The Entra ID access token.</param>
-    public OracleDbService(string tnsName, string userId, string accessToken)
-        : this(
-            tnsName,
-            userId,
-            accessToken,
-            Environment.GetEnvironmentVariable("TNS_ADMIN")
-                ?? throw new InvalidOperationException("TNS_ADMIN environment variable is required"))
-    {
-    }
-
-    /// <summary>
-    /// Creates a new Oracle database service with a pre-built connection string and token.
-    /// </summary>
-    /// <param name="baseConnectionString">The base connection string (without token).</param>
-    /// <param name="accessToken">The Entra ID access token.</param>
-    /// <param name="tnsAdmin">Optional TNS_ADMIN directory path.</param>
-    /// <returns>A new OracleDbService instance.</returns>
-    private OracleDbService() { }
-
-    public static OracleDbService FromConnectionString(string baseConnectionString, string accessToken, string? tnsAdmin = null)
-    {
-        if (!string.IsNullOrEmpty(tnsAdmin))
-        {
-            OracleConfiguration.TnsAdmin = tnsAdmin;
-            OracleConfiguration.WalletLocation = tnsAdmin;
-        }
-
-        var service = new OracleDbService();
-        service._connectionString = baseConnectionString;
-        service._accessToken = accessToken;
-        return service;
     }
 
     /// <summary>
@@ -94,18 +45,7 @@ public class OracleDbService : IDisposable, IAsyncDisposable
     public async Task OpenAsync(CancellationToken cancellationToken = default)
     {
         _connection = new OracleConnection(_connectionString);
-        if (!string.IsNullOrEmpty(_walletPassword))
-        {
-            var opaquePassword = new OracleOpaqueString();
-            foreach (var c in _walletPassword)
-                opaquePassword.AppendChar(c);
-            opaquePassword.MakeReadOnly();
-            OracleConfiguration.WalletPassword = opaquePassword;
-        }
-        if (_accessToken != null)
-        {
-            _connection.AccessToken = new OracleAccessToken(_accessToken.ToCharArray());
-        }
+        _connection.AccessToken = new OracleAccessToken(_accessToken.ToCharArray());
         await _connection.OpenAsync(cancellationToken);
     }
 

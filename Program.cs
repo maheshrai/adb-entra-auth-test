@@ -25,11 +25,10 @@ var entraScope = Environment.GetEnvironmentVariable("ENTRA_SCOPE")
 // Oracle ADB configuration
 var oracleTnsName = Environment.GetEnvironmentVariable("ORACLE_TNS_NAME")
     ?? throw new InvalidOperationException("ORACLE_TNS_NAME environment variable is required");
-var oracleUserId = Environment.GetEnvironmentVariable("ORACLE_USER_ID")
-    ?? throw new InvalidOperationException("ORACLE_USER_ID environment variable is required");
 var tnsAdmin = Environment.GetEnvironmentVariable("TNS_ADMIN")
     ?? throw new InvalidOperationException("TNS_ADMIN environment variable is required");
-var walletPassword = Environment.GetEnvironmentVariable("ORACLE_WALLET_PASSWORD");
+var walletLocation = Environment.GetEnvironmentVariable("WALLET_LOCATION")
+    ?? throw new InvalidOperationException("WALLET_LOCATION environment variable is required");
 
 try
 {
@@ -113,10 +112,9 @@ try
 
     await using var oracleService = new OracleDbService(
         tnsName: oracleTnsName,
-        userId: oracleUserId,
         accessToken: authResult.AccessToken,
         tnsAdmin: tnsAdmin,
-        walletPassword: walletPassword
+        walletLocation: walletLocation
     );
 
     await oracleService.OpenAsync();

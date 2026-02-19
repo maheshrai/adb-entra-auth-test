@@ -59,9 +59,8 @@ export ENTRA_SCOPE="api://your-client-id/.default"            # Optional
 
 # Oracle ADB
 export ORACLE_TNS_NAME="mydb_high"                            # TNS alias from tnsnames.ora
-export ORACLE_USER_ID="your_db_user"
-export TNS_ADMIN="/path/to/wallet"                            # Wallet directory
-export ORACLE_WALLET_PASSWORD="wallet_password"               # Optional
+export TNS_ADMIN="/path/to/tnsnames"                          # Directory containing tnsnames.ora
+export WALLET_LOCATION="/path/to/wallet"                      # Directory containing cwallet.sso
 ```
 
 ### Entra ID Setup
@@ -158,7 +157,7 @@ var token = await entraService.GetAccessTokenAsync();
 Connects to Oracle ADB using TNS name and OAuth token authentication.
 
 ```csharp
-var oracleService = new OracleDbService(tnsName, userId, accessToken, tnsAdmin);
+var oracleService = new OracleDbService(tnsName, accessToken, tnsAdmin, walletLocation);
 await oracleService.OpenAsync();
 var result = await oracleService.ExecuteQueryAsync("SELECT * FROM my_table");
 ```
